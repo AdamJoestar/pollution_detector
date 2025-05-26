@@ -9,8 +9,8 @@
 
 // Konfigurasi Blynk // Ganti dengan Auth Token Anda dari Blynk
 char auth[] = BLYNK_AUTH_TOKEN;
-char ssid[] = "Kobokanaeru"; //nama hotspot yang digunakan
-char pass[] = "Kobosibocil01"; //password hotspot yang digunakan
+char ssid[] = "Wokwi-GUEST"; //nama hotspot yang digunakan
+char pass[] = ""; //password hotspot yang digunakan
 
 // Pin sensor gas (AOUT)
 const int GAS_SENSOR_PIN = 34; // GPIO34 (ADC1_CH6)
@@ -27,11 +27,58 @@ BlynkTimer timer;
 // Flag untuk mencegah notifikasi berulang terus-menerus
 bool highPollutionNotified = false;
 
+void scanNetworks() {
+  Serial.println("Memulai scan jaringan WiFi...");
+  int n = WiFi.scanNetworks();
+  Serial.println("Scan selesai.");
+  if (n == 0) {
+    Serial.println("Tidak ditemukan jaringan WiFi.");
+  } else {
+    Serial.print(n);
+    Serial.println(" jaringan WiFi ditemukan:");
+    for (int i = 0; i < n; ++i) {
+      Serial.print(i + 1);
+      Serial.print(": ");
+      Serial.print(WiFi.SSID(i));
+      Serial.print(" (RSSI: ");
+      Serial.print(WiFi.RSSI(i));
+      Serial.print(" dBm)");
+      Serial.println((WiFi.encryptionType(i) == WIFI_AUTH_OPEN) ? " Terbuka" : " Terenkripsi");
+      delay(10);
+    }
+  }
+  Serial.println();
+}
+
 void setup() {
   Serial.begin(115200);
 
-  // Mulai koneksi Blynk
-  Blynk.begin(auth, ssid, pass);
+  scanNetworks();
+
+  Serial.print("Menghubungkan ke SSID: ");
+  Serial.println(ssid);
+
+  WiFi.begin(ssid, pass);
+
+  int max_attempts = 20;
+  int attempt = 0;
+  while (WiFi.status() != WL_CONNECTED && attempt < max_attempts) {
+    delay(500);
+    Serial.print(".");
+    attempt++;
+  }
+  Serial.println();
+
+  if (WiFi.status() == WL_CONNECTED) {
+    Serial.println("Terhubung ke WiFi!");
+    Serial.print("Alamat IP: ");
+    Serial.println(WiFi.localIP());
+
+    // Mulai koneksi Blynk setelah WiFi terhubung
+    Blynk.begin(auth, ssid, pass);
+  } else {
+    Serial.println("Gagal terhubung ke WiFi.");
+  }
 
   // Konfigurasi timer untuk membaca sensor dan mengirim data setiap 3 detik
   timer.setInterval(3000L, sendSensorData);
