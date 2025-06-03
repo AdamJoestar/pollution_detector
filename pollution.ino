@@ -103,12 +103,15 @@ void sendSensorData() {
   // Cek jika polusi mencapai batas maksimal
   if (gasValue >= POLUSI_MAX_THRESHOLD) {
     if (!highPollutionNotified) { // Kirim notifikasi hanya sekali saat ambang batas tercapai
-      Blynk.logEvent("PERINGATAN! Polusi udara tinggi. Jangan keluar ruangan.");
-      Serial.println("Notifikasi: Polusi tinggi!");
+      Blynk.logEvent("bahaya", "Gas level tinggi!");
+      Serial.println("Notifikasi: Bahaya untuk keluar!");
       highPollutionNotified = true; // Set flag agar tidak notifikasi lagi
     }
   } else {
-    // Reset flag ketika polusi kembali normal
-    highPollutionNotified = false;
+    if (highPollutionNotified) { // Kirim notifikasi aman hanya sekali saat polusi turun di bawah threshold
+      Blynk.logEvent("aman", "Gas level normal");
+      Serial.println("Notifikasi: Aman untuk keluar rumah");
+      highPollutionNotified = false; // Reset flag
+    }
   }
 }
